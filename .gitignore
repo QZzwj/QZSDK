@@ -16,3 +16,8 @@ sysdrv/source/buildroot/*/output/
 output/
 media/**/build/
 media/**/out/
+
+# app 的 CMake 构建产物
+project/app/*/build/
+project/app/*/build-sim/
+project/app/*/out/
