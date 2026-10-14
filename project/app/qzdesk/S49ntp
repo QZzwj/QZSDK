@@ -1,0 +1,40 @@
+#!/bin/sh
+
+PIDFILE=/var/run/qzdesk-ntp.pid
+NTP_PIDFILE=/var/run/ntpd.pid
+DAEMON=/usr/sbin/ntpd
+
+case "$1" in
+    run)
+        child=
+        trap 'trap - TERM INT; [ -z "$child" ] || kill "$child" 2>/dev/null; [ -z "$child" ] || wait "$child" 2>/dev/null; rm -f "$PIDFILE" "$NTP_PIDFILE"; exit 0' TERM INT
+        while :; do
+            "$DAEMON" -n -g -G -p "$NTP_PIDFILE" &
+            child=$!
+            wait "$child"
+            result=$?
+            child=
+            logger -t qzdesk-ntp "ntpd exited ($result); retrying in 30 seconds"
+            sleep 30 &
+            child=$!
+            wait "$child"
+            child=
+        done
+        ;;
+    start)
+        [ -x "$DAEMON" ] || exit 1
+        start-stop-daemon -S -q -b -m -p "$PIDFILE" -x /bin/sh -- "$0" run
+        ;;
+    stop)
+        start-stop-daemon -K -q -p "$PIDFILE"
+        ;;
+    restart|reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload}"
+        exit 1
+        ;;
+esac

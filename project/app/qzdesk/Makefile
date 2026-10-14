@@ -81,6 +81,12 @@ qzdesk-build:
 	install -m 0644 $(CURRENT_DIR)/fonts/NanoTikBazHei-Bold.ttf $(PKG_BIN)/usr/share/fonts/
 	install -m 0755 $(CURRENT_DIR)/S30qzdesk $(PKG_BIN)/etc/init.d/
 	install -m 0755 $(CURRENT_DIR)/S30qzdesk $(PKG_BIN)/root/etc/init.d/
+	install -m 0755 $(CURRENT_DIR)/S49ntp $(PKG_BIN)/root/etc/init.d/
+	install -m 0644 $(CURRENT_DIR)/ntp.conf $(PKG_BIN)/root/etc/ntp.conf
+	printf 'CST-8\n' > $(PKG_BIN)/root/etc/TZ
+	chmod 0644 $(PKG_BIN)/root/etc/TZ
+	install -d $(PKG_BIN)/root/usr/share/udhcpc/default.script.d
+	install -m 0755 $(CURRENT_DIR)/dns-compat.sh $(PKG_BIN)/root/usr/share/udhcpc/default.script.d/50-qzdesk-dns
 	# RTL8723BS（SDIO WiFi+BT）驱动模块：镜像内核里编译成了模块，但 SDK 的打包流程
 	# 不会把它放进 rootfs，所以随 qzdesk 一起装到 oem，由 S30qzdesk 在起界面前 insmod。
 	# 固件由 overlay-luckfox-wifibt-firmware 提供（板级配置已引用）。

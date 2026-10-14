@@ -136,7 +136,7 @@ setup_profile() {
 		KEEP_INIT=S30qzdesk
 		# S99qzdesk 是桌面脚本的旧名字，留着会和 S30qzdesk 各起一个界面
 		DROP_INITS="S30qzcam S99qzcam S99qzdesk"
-		DROP_BINS="qzcam"
+		DROP_BINS="qzcam rkipc"
 		DROP_DIRS="usr/share/qzcam lib/camera"
 		HIDE_DESKTOP=0
 		KEEP_DEPS="WiFi 模块与固件、中文字体、Rust 核心（若已交叉编译）"
@@ -413,6 +413,27 @@ isolate_staging() {
 			info "清 $d/.qzdesk-manifest"; cleaned=$((cleaned + 1))
 		fi
 	done
+	# OEM 打包树采用增量复制，也必须清理上一目标的启动项和程序。
+	local oem="$SDK/output/out/oem/usr"
+	for f in $DROP_INITS; do
+		if [ -e "$oem/etc/init.d/$f" ] || [ -e "$oem/etc/init.d/$f.disabled" ]; then
+			[ "$dry_run" = 1 ] || rm -f "$oem/etc/init.d/$f" "$oem/etc/init.d/$f.disabled"
+			info "清 OEM 启动项 $f"; cleaned=$((cleaned + 1))
+		fi
+	 done
+	for b in $DROP_BINS; do
+		if [ -e "$oem/bin/$b" ] || [ -e "$oem/bin/$b.disabled" ]; then
+			[ "$dry_run" = 1 ] || rm -f "$oem/bin/$b" "$oem/bin/$b.disabled"
+			info "清 OEM 程序 $b"; cleaned=$((cleaned + 1))
+		fi
+	 done
+	for sub in $DROP_DIRS; do
+		local oem_sub="${sub#usr/}"
+		if [ -e "$oem/$oem_sub" ]; then
+			[ "$dry_run" = 1 ] || rm -rf "$oem/$oem_sub"
+			info "裁掉 OEM $oem_sub"
+		fi
+	 done
 	# rootfs 打包目录：上一版固件留下的自启脚本与二进制，必须显式删
 	for d in "$SDK"/output/out/rootfs_* "$SDK"/sysdrv/out/rootfs_*; do
 		for f in $DROP_INITS; do
